@@ -1,0 +1,15 @@
+[tool]
+[tool.poetry]
+name = "root"
+version = "0.0.0"
+description = "Listen on telegram room and downloads all shared files"
+authors = [ "diego.roccia@gmail.com" ]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+telethon = "*"
+
+[tool.poetry.dev-dependencies]
+ipython = "*"
+pre-commit = "^2.2.0"
+black = "^19.10b0"
