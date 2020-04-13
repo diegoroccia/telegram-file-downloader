@@ -8,6 +8,7 @@ authors = [ "diego.roccia@gmail.com" ]
 [tool.poetry.dependencies]
 python = "^3.7"
 telethon = "*"
+pytz = "^2019.3"
 
 [tool.poetry.dev-dependencies]
 ipython = "*"

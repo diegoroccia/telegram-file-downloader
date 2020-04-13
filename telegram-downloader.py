@@ -1,41 +1,76 @@
-from telethon import TelegramClient
+from telethon import TelegramClient, sync
 from telethon.tl.types import InputMessagesFilterDocument
-from datetime import date
+from datetime import date, datetime, timedelta
 import glob
+import pytz
+import sqlite3
+import sys
+import yaml
 
-# import sqlite3
-
-api_id = 998937
-api_hash = "438c3382cff1b6bc01ec948bad04d5f3"
-channel_name = "🇮🇹 eBooksItalia 📚 [ #TeamAlberello🌳 #NoTarocchi ☣️ ]"
-# channel_name = "📚 Gruppo eBooksItalia 📚"
-# channel_name=':it: eBooksItalia :books: [ #TeamAlberello:deciduous_tree: #NoTarocchi ☣ ]'
-offset = date(year=2019, month=9, day=26)
+with open("config.yaml") as cfg_file:
+    config = yaml.load(cfg_file)
+    api_id = config.get("api_id")
+    api_hash = config.get("api_hash")
 
 client = TelegramClient("anon", api_id, api_hash)
 
 client.start()
-# ---------------------------------------
+
+utc = pytz.UTC
+
+go_back_to = utc.localize(
+    datetime.utcnow().replace(minute=0, hour=0, second=0) - timedelta(days=1)
+)
+
+print(f"I will go back to {go_back_to}")
 
 
-room = [dialog for dialog in client.get_dialogs() if dialog.name == channel_name][0]
+rooms = [dialog for dialog in client.get_dialogs() if "eBooksItalia" in dialog.name]
 
-# for msg in client.iter_messages(channel_name, limit=None, filter=InputMessagesFilterDocument, offset_date=offset):
-for msg in client.iter_messages(room, limit=None, filter=InputMessagesFilterDocument):
-    try:
-        file_name = msg.media.document.to_dict()["attributes"][0].get("file_name", "")
-        if file_name.endswith("epub"):
-            print(
-                f"Downloading {file_name} ( uploaded on {msg.media.document.date} )...",
-                end="",
+connection = sqlite3.Connection("database.sqlite3")
+
+for room in rooms:
+    print(f"Scraping {room.name} ...")
+    for msg in client.iter_messages(
+        room, limit=None, filter=InputMessagesFilterDocument
+    ):
+        if msg.date < go_back_to:
+            break
+        try:
+            file_name = msg.media.document.to_dict()["attributes"][0].get(
+                "file_name", ""
             )
-            if glob.glob("books/" + file_name):
-                print("file already present")
-                break
-            else:
-                client.download_media(message=msg, file="books/")
-                print("Done")
-    except KeyError:
-        print("Unable to download ")
-        print(msg.media.document)
-        pass
+            if file_name.endswith("epub"):
+                print(
+                    f" - [{msg.id} / {msg.media.document.date}] {file_name} ...",
+                    end="",
+                )
+                if (
+                    len(
+                        connection.execute(
+                            f"select * from Messages where msg_id = {msg.id}"
+                        ).fetchall()
+                    )
+                    > 0
+                ):
+                    print("message already in the DB")
+                elif glob.glob("books/" + file_name):
+                    print("file already present")
+                else:
+                    client.download_media(message=msg, file="books/")
+                    connection.execute(
+                        f'insert into Messages values ( {msg.id}, "{file_name}" );'
+                    )
+                    connection.commit()
+                    print("\u2713")
+        except KeyError:
+            print("Unable to download ")
+            print(msg.media.document)
+            pass
+        except KeyboardInterrupt:
+            print("\n\ngot CTRL+C, stopping ... ")
+            connection.close()
+            sys.exit(0)
+
+
+connection.close()
