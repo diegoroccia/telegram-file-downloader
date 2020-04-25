@@ -38,7 +38,7 @@ def get_epub_info(fname):
     return res
 
 
-with open("config.yaml") as cfg_file:
+with open("/config/config.yaml") as cfg_file:
     config = yaml.load(cfg_file)
     api_id = config.get("api_id")
     api_hash = config.get("api_hash")
