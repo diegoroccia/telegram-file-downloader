@@ -9,8 +9,10 @@ authors = [ "diego.roccia@gmail.com" ]
 python = "^3.7"
 telethon = "*"
 pytz = "^2019.3"
+lxml = "^4.5.0"
 
 [tool.poetry.dev-dependencies]
 ipython = "*"
 pre-commit = "^2.2.0"
 black = "^19.10b0"
+lxml = "^4.5.0"
