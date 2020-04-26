@@ -1,4 +1,4 @@
 config.yaml
-anon.session
+*.session
 database.sqlite3
 books
