@@ -6,10 +6,11 @@ description = "Listen on telegram room and downloads all shared files"
 authors = [ "diego.roccia@gmail.com" ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 telethon = "*"
 pytz = "^2019.3"
 lxml = "^4.5.0"
+isort = "^4.3.21"
 
 [tool.poetry.dev-dependencies]
 ipython = "*"
